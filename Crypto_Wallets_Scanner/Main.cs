@@ -1,33 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Drawing;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+
 
 namespace Crypto_Wallets_Scanner
 {
     public partial class Main : Form
     {
-        private BackgroundWorker worker;
-
         public Main()
         {
             InitializeComponent();
-
-            // Initialize the BackgroundWorker
-            worker = new BackgroundWorker();
-            worker.WorkerReportsProgress = true;
-            worker.DoWork += Worker_DoWork;
-            worker.ProgressChanged += Worker_ProgressChanged;
-            worker.RunWorkerCompleted += Worker_RunWorkerCompleted;
         }
-        private int selectedThreadCount = 1; // Default value
-
-
         List<string> wallets = new List<string>();
-        string result = string.Empty;
         private void button1_MouseHover(object sender, EventArgs e)
         {
             start.ForeColor = Color.White;
@@ -40,135 +25,72 @@ namespace Crypto_Wallets_Scanner
 
         private void button1_Click(object sender, EventArgs e)
         {
-            result_txt.Clear();
-            if (!worker.IsBusy)
-            {
-                // Clear the result textbox before starting the background task
-                result_txt.Text = string.Empty;
-
-                // Start the background task
-                worker.RunWorkerAsync();
-            }
-        }
-
-        private void Worker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            // Perform the background task here
-            List<string> blockchains = new List<string>
-            {
-                "https://bscscan.com/address/",
-                "https://etherscan.io/address/",
-                "https://polygonscan.com/address/",
-                "https://ftmscan.com/address/",
-                "https://snowtrace.io/address/",
-                "https://moonriver.moonscan.io/address/",
-                "https://moonscan.io/address/",
-                "https://cronoscan.com/address/",
-                "https://blockchair.com/bitcoin/address/"
-            };
-
+            wallets.Clear();
+            List<string> api = new List<string>();
+            api.Add("REFSSP45CHYSZTHZJQTPUEPSIKFHK8BKBF");
+            api.Add("G5D41QG8P7TPMH7RZ3MRXU8UZ9TIHTD46E");
+            api.Add("QM6QBUT2TJV9UDVC2ZJJ1SKAHC4224UW3X");
+            api.Add("2DMMWYK1UJDYNG6PVGKEYFEWM4BGT5PFGS");
+            api.Add("9IGDBNVNDWRWPD1DEA62SYABA5ZSIJQFJP");
+            api.Add("PI61AG4F4GEFCAMU5NNT58R8U4SCCBG28A");
+            api.Add("4GF58CNDHFGRNSZJJ1XS225RNCWC71BJAS");
+            api.Add("IR522N8MSR5ZYZ4AYY473K9P6FQCY5TYN3");
             Wallets_Scanner ws = new Wallets_Scanner();
-
-            Invoke((Action)(() =>
+            foreach (string item in wallets_txt.Lines)
             {
-                wallets.Clear();
-                foreach (string item in wallets_txt.Lines)
+                wallets.Add(item);
+            }
+            label4.Text = wallets.Count.ToString();
+            for(int i = 0; i < wallets.Count; i++)
+            {
+                for(int b=0;b < 7; b++)
                 {
-                    wallets.Add(item);
-                }
-                label4.Text = wallets.Count.ToString();
-            }));
-
-            int totalWallets = wallets.Count * blockchains.Count;
-            int progress = 0;
-            UpdateProgressBar(0);
-
-            ParallelOptions parallelOptions = new ParallelOptions
-            {
-                MaxDegreeOfParallelism = selectedThreadCount // Set the selected thread count
-            };
-
-            Parallel.ForEach(wallets, parallelOptions, wallet =>
-            {
-                for (int b = 0; b < blockchains.Count; b++)
-                {
-                    string blockch;
+                    string blockch="";
+                    string networklink = "";
                     if (b == 0)
                     {
                         blockch = "BNB";
-                        result = ws.GetWalletBallance(wallet, blockchains[b], blockch, "dropdownMenuBalance");
+                        networklink = "api.bscscan.com";
                     }
                     else if (b == 1)
                     {
                         blockch = "Ether";
-                        result = ws.GetWalletBallance(wallet, blockchains[b], blockch, "dropdownMenuBalance");
+                        networklink = "api.etherscan.io";
                     }
                     else if (b == 2)
                     {
                         blockch = "Polygon";
-                        result = ws.GetWalletBallance(wallet, blockchains[b], blockch, "availableBalanceDropdown");
+                        networklink = "api.polygonscan.com";
                     }
                     else if (b == 3)
                     {
                         blockch = "Fantom";
-                        result = ws.GetWalletBallance(wallet, blockchains[b], blockch, "availableBalanceDropdown");
+                        networklink = "api.ftmscan.com";
                     }
                     else if (b == 4)
                     {
                         blockch = "Avalanche";
-                        result = ws.GetWalletBallance(wallet, blockchains[b], blockch, "availableBalanceDropdown");
+                        networklink = "api.snowtrace.io";
                     }
                     else if (b == 5)
                     {
                         blockch = "MoonRiver";
-                        result = ws.GetWalletBallance(wallet, blockchains[b], blockch, "availableBalanceDropdown");
+                        networklink = "api-moonriver.moonscan.io";
                     }
                     else if (b == 6)
                     {
                         blockch = "MoonBeam";
-                        result = ws.GetWalletBallance(wallet, blockchains[b], blockch, "availableBalanceDropdown");
-                    }
-                    else if (b == 7)
-                    {
-                        blockch = "Cronos";
-                        result = ws.GetWalletBallance(wallet, blockchains[b], blockch, "availableBalanceDropdown");
+                        networklink = "api-moonbeam.moonscan.io";
                     }
                     else
                     {
-                        blockch = "BTC";
-                        result = ws.GetWalletBallance(wallet, blockchains[b], blockch, "account-hash__balance__values");
+                        blockch = "Cronos";
+                        networklink = "api.cronoscan.com/";
                     }
-
-                    // Report progress and result to the UI thread
-                    worker.ReportProgress((progress * 100) / totalWallets, result);
-                    UpdateProgressBar((progress * 100) / totalWallets);
-                    progress++;
+                    result_txt.Text += ws.GetWalletBallance(wallets[i], api[b], blockch,networklink);
                 }
-            });
-        }
-
-        private void UpdateProgressBar(int value)
-        {
-            // Make sure you invoke the UI update on the main thread
-            if (progressBar.InvokeRequired)
-            {
-                progressBar.Invoke(new Action<int>(UpdateProgressBar), value);
+                
             }
-            else
-            {
-                progressBar.Value = value;
-            }
-        }
-
-        private void Worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
-        {
-            // Update the UI with the progress and result
-            result_txt.AppendText(e.UserState.ToString());
-        }
-
-        private void Worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            // The background task is completed
         }
 
         private void start_MouseEnter(object sender, EventArgs e)
@@ -176,15 +98,12 @@ namespace Crypto_Wallets_Scanner
             start.ForeColor = Color.White;
         }
 
+       
         private void richTextBox1_KeyPress(object sender, KeyPressEventArgs e)
         {
-            // Handle key press event if needed
+            
         }
 
-        private void threads_ValueChanged(object sender, EventArgs e)
-        {
-            selectedThreadCount = (int)threads_tx.Value;
 
-        }
     }
 }
